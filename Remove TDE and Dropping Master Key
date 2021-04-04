@@ -1,0 +1,24 @@
+--Steps to remove TDE and Drop Master Key in MASTER Database and other encryption details
+========================================================================================
+--Step-1: Disable encryption on user DB as follows.
+
+Use Master
+Go
+Alter database ALPHA Set encryption off
+
+--Step-2: Now Drop Encryption Key on user DB as follows: 
+
+use ALPHA
+drop database encryption key
+
+--Step-3: Now drop the TDE Cerificate from MASTER DB as follows: 
+
+USE Master;
+go
+drop certificate TDE_Cert_New
+
+--Step-4: Finally drop the master key from MASTER Database as follows: 
+
+use master
+go 
+Drop MASTER KEY
