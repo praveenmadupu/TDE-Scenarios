@@ -28,6 +28,8 @@ on dek.encryptor_thumbprint = c.thumbprint
 inner join sys.databases d
 on dek.database_id = d.database_id;
 =====================================================
+=====================================================
+=====================================================
 select   db_name(database_id),
          case encryption_state 
             when 0 then '0 - No database encryption key present, no encryption'
@@ -58,3 +60,31 @@ join  master.sys.certificates ctf
 on dek.encryptor_thumbprint != ctf.thumbprint
 and db_name(dek.database_id) = 'Beta' -- Put here DB Name
 and ctf.name = 'TDEServerCertificate'  --Put here Certificate Name
+=====================================================
+=====================================================
+=====================================================
+use master;
+
+select
+    database_name = d.name,
+    dek.encryptor_type,
+    cert_name = c.name
+from sys.dm_database_encryption_keys dek
+left join sys.certificates c
+on dek.encryptor_thumbprint = c.thumbprint
+inner join sys.databases d
+on dek.database_id = d.database_id;
+
+SELECT
+    db.name,
+    db.is_encrypted,
+    dm.encryption_state,
+    dm.percent_complete,
+    dm.key_algorithm,
+    dm.key_length
+FROM
+    sys.databases db
+    LEFT OUTER JOIN sys.dm_database_encryption_keys dm
+        ON db.database_id = dm.database_id;
+
+
