@@ -1,0 +1,46 @@
+--Step-1: Create Service Master Key
+
+USE master;
+CREATE MASTER KEY ENCRYPTION BY PASSWORD='Mpk@bunny$12345';
+GO
+
+--Step-2: Backup Service Master Key
+
+USE MASTER
+GO
+BACKUP SERVICE MASTER KEY 
+TO FILE = '\\SINGAPORE\EncryptionFiles\SvcMasterKey.key'
+ENCRYPTION BY PASSWORD = 'PraveenM@DBA$123'
+
+--Step-3: Create a Certificate on MASTER DB to Support TDE.
+
+USE master;
+GO 
+CREATE CERTIFICATE TDE_Cert_New
+WITH SUBJECT='Database_Encryption';
+GO
+
+--Step-4: Backup Master DB Certificate and Private Key.
+
+USE master;
+GO
+BACKUP CERTIFICATE TDE_Cert_New
+To FILE = '\\SINGAPORE\EncryptionFiles\TDE_Cert_New.cer'
+WITH PRIVATE KEY(
+ FILE = '\\SINGAPORE\EncryptionFiles\TDE_Cert_New_PrivateKey.pvk',
+ ENCRYPTION   BY PASSWORD = 'Mpk@bunny$123'
+)
+
+--Step 5: Create Database Encryption Key on required User DB.
+
+use alpha
+go
+CREATE DATABASE ENCRYPTION KEY
+WITH ALGORITHM = AES_256
+ENCRYPTION BY SERVER CERTIFICATE TDE_Cert_New;
+
+--Step-6: Enable finally TDE on required user DB using below script.
+
+USE ALPHA
+GO
+ALTER DATABASE Alpha SET ENCRYPTION ON;
