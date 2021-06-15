@@ -44,6 +44,26 @@ USE Anirudh
 GO
 ALTER DATABASE Anirudh  SET ENCRYPTION ON;
 
+==================================================================================================================
+--Script to check Master key details:
+USE master;
+SELECT name, key_length, algorithm_desc, create_date, modify_date
+FROM sys.symmetric_keys;
+==================================================================================================================
+--Script to check TDE DB List, Certificate Name, Encryption State, Encryptor Thumbprint.
+SELECT D.name AS 'Database Name'
+,c.name AS 'Cert Name'
+,E.encryptor_type AS 'Type'
+,case
+    when E.encryption_state = 3 then 'Encrypted'
+    when E.encryption_state = 2 then 'In Progress'
+    else 'Not Encrypted'
+end as state,
+E.encryption_state, E.encryptor_Thumbprint, E.* FROM sys.dm_database_encryption_keys E
+right join sys.databases D on D.database_id = E.database_id
+left join sys.certificates c ON E.encryptor_thumbprint=c.thumbprint
+where D.name not in ('master','model', 'msdb')
+==================================================================================================================
 
 -- At Destination Server:
 ========================
@@ -67,12 +87,6 @@ CREATE CERTIFICATE TDE_Certificate
 FROM FILE = 'B:\temp\America_TDE_MasterKeyCert.cer'    
 WITH PRIVATE KEY (FILE = 'B:\temp\America_TDE_MasterKey.pvk',
 DECRYPTION BY PASSWORD = 'Sp@1234567#000')
-
---Script to check Master key details:
-USE master;
-SELECT name, key_length, algorithm_desc, create_date, modify_date
-FROM sys.symmetric_keys;
-
 
 --Use below script to Restore TDE Enabled Source DB on Destination Server.
 --Modify your Restore DB as per your requirements.
