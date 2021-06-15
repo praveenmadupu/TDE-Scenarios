@@ -100,3 +100,19 @@ FROM  DISK = N'H:\SQLBackups\Delhi\Anirudh.bak'
 WITH  move 'Anirudh' to 'E:\SQLData\Delhi\Anirudh.mdf',
       move 'Anirudh_log' to 'F:\SQLLogs\Delhi\Anirudh_log.ldf',
 	  FILE = 1, NOUNLOAD,  REPLACE,  STATS = 5;
+
+
+--Steps to disable TDE and cleanup everything if you ever
+
+--Disable TDE.
+USE master
+ALTER DATABASE Anirudh SET ENCRYPTION OFF
+
+--Drop the database encryption key.
+USE Anirudh
+DROP DATABASE ENCRYPTION KEY
+
+--Drop certificate and master key on Master DB.
+USE master
+DROP CERTIFICATE TDE_Certificate
+DROP MASTER KEY
