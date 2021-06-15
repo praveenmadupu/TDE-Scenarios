@@ -1,0 +1,89 @@
+-- At Source Server
+
+
+
+--Create Database Master Key on Master DB.
+USE master; 
+GO 
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'Sp@1234567#000';
+GO
+
+--Backup Master Key of Master DB
+USE master;  
+GO 
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Sp@1234567#000';  
+BACKUP MASTER KEY TO FILE = 'B:\temp\America_MasterDB_DBMasterKey.pvk'  
+    ENCRYPTION BY PASSWORD = 'Sp@1234567#000';
+
+--Create Certificate on Master Database.
+
+USE master; 
+GO 
+CREATE CERTIFICATE TDE_Certificate 
+WITH SUBJECT = 'TDE_Certificate_June_152021'; 
+GO
+
+--Backup certificate with Private Key
+USE master;
+GO
+BACKUP CERTIFICATE TDE_Certificate
+TO FILE = 'B:\temp\America_TDE_MasterKeyCert.cer'
+WITH PRIVATE KEY
+(FILE = 'B:\temp\America_TDE_MasterKey.pvk',
+ENCRYPTION BY PASSWORD = 'Sp@1234567#000')
+
+--Create DEK (Database Encryption Key) on required User DB using Certificate
+USE Anirudh;
+GO 
+CREATE DATABASE ENCRYPTION KEY WITH ALGORITHM = AES_128 
+ENCRYPTION BY SERVER CERTIFICATE TDE_Certificate; 
+GO
+
+
+--Enable TDE on required User DB as follows
+USE Anirudh
+GO
+ALTER DATABASE Anirudh  SET ENCRYPTION ON;
+
+
+-- At Destination Server
+
+--Restore Master Key of Master DB of Source Server in Destination Server using below: 
+
+USE master;
+GO 
+RESTORE MASTER KEY  
+    FROM FILE = 'B:\temp\America_MasterDB_DBMasterKey.pvk'  
+    DECRYPTION BY PASSWORD = 'Sp@1234567#000' --password to decrypt backup
+    ENCRYPTION BY PASSWORD = 'Sp@1234567#111'; --password to encrypt restored Master Key in the current database.
+GO
+
+--Restore CERTIFICATE of Source Server in Destination Server using below: 
+
+USE master;
+GO
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Sp@1234567#111';
+GO
+CREATE CERTIFICATE TDE_Certificate
+FROM FILE = 'B:\temp\America_TDE_MasterKeyCert.cer'    
+WITH PRIVATE KEY (FILE = 'B:\temp\America_TDE_MasterKey.pvk',
+DECRYPTION BY PASSWORD = 'Sp@1234567#000')
+
+--Script to check Master key details:
+
+USE master;
+SELECT name, key_length, algorithm_desc, create_date, modify_date
+FROM sys.symmetric_keys;
+
+
+--Use below script to Restore TDE Enabled Source DB on Destination Server.
+--Modify your Restore DB as per your requirements.
+USE master
+GO
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Sp@1234567#111';
+GO
+RESTORE DATABASE Anirudh
+FROM  DISK = N'H:\SQLBackups\Delhi\Anirudh.bak'
+WITH  move 'Anirudh' to 'E:\SQLData\Delhi\Anirudh.mdf',
+      move 'Anirudh_log' to 'F:\SQLLogs\Delhi\Anirudh_log.ldf',
+	  FILE = 1, NOUNLOAD,  REPLACE,  STATS = 5;
