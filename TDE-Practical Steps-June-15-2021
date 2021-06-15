@@ -1,6 +1,7 @@
--- At Source Server
+--Source: https://www.b-blog.info/en/transparent-data-encryption-tde-in-sql-server-enable-keys-certificates-backups-restore.html
 
-
+-- At Source Server:
+===================
 
 --Create Database Master Key on Master DB.
 USE master; 
@@ -16,7 +17,6 @@ BACKUP MASTER KEY TO FILE = 'B:\temp\America_MasterDB_DBMasterKey.pvk'
     ENCRYPTION BY PASSWORD = 'Sp@1234567#000';
 
 --Create Certificate on Master Database.
-
 USE master; 
 GO 
 CREATE CERTIFICATE TDE_Certificate 
@@ -39,15 +39,14 @@ CREATE DATABASE ENCRYPTION KEY WITH ALGORITHM = AES_128
 ENCRYPTION BY SERVER CERTIFICATE TDE_Certificate; 
 GO
 
-
 --Enable TDE on required User DB as follows
 USE Anirudh
 GO
 ALTER DATABASE Anirudh  SET ENCRYPTION ON;
 
 
--- At Destination Server
-
+-- At Destination Server:
+========================
 --Restore Master Key of Master DB of Source Server in Destination Server using below: 
 
 USE master;
@@ -70,7 +69,6 @@ WITH PRIVATE KEY (FILE = 'B:\temp\America_TDE_MasterKey.pvk',
 DECRYPTION BY PASSWORD = 'Sp@1234567#000')
 
 --Script to check Master key details:
-
 USE master;
 SELECT name, key_length, algorithm_desc, create_date, modify_date
 FROM sys.symmetric_keys;
@@ -78,6 +76,7 @@ FROM sys.symmetric_keys;
 
 --Use below script to Restore TDE Enabled Source DB on Destination Server.
 --Modify your Restore DB as per your requirements.
+
 USE master
 GO
 OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Sp@1234567#111';
