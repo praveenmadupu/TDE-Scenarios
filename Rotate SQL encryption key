@@ -1,0 +1,52 @@
+	Rotate SQL encryption key
+	
+	Please find the below implementation plan for TDE cert rotations.
+	
+	1. Check Current Encrypted Databases.
+	
+	2. Create a new SQL TDE certificate.
+	
+	Use master;
+	Go
+	CREATE CERTIFICATE [TDE_Certificate_NEW]
+	WITH SUBJECT = 'NEW TDE Certificate'
+	GO
+	
+	3.Backup the new SQL TDE certificate so we can create it on other systems as needed.
+	
+	--Backup Current Cert
+	BACKUP CERTIFICATE TDE_Certificate_NEW
+	TO FILE = 'G:\TDECertBackup\TDE_Certificate_NEW.cer'
+	WITH PRIVATE KEY (File = 'G:\TDECertBackup\TDE_Certificate_NEW.pvk',
+	ENCRYPTION BY PASSWORD = '<Place strong password here>');
+	
+        --Backup Old cert as well
+	BACKUP CERTIFICATE TDE_Certificate
+	TO FILE = 'G:\TDECertBackup\TDE_Certificate.cer'
+	WITH PRIVATE KEY (File = 'G:\TDECertBackup\TDE_Certificate_OLD.pvk',
+	ENCRYPTION BY PASSWORD = '<Place strong password here>');
+	GO
+	
+        Note :- Make sure we don’t store our certificate’s backups on the server, or with the database backups. 
+        Preserve these cert backup to secure location so that in case of server down they can be retrtive easly.
+	
+	4. Optional (in case you want to restore database backups to any other instance )
+	
+	-- restore cert backup to destination server using command below :-
+	-- Transfer cert backup to destination server and keep backup path same or make a path change in code below
+	
+        USE MASTER
+        GO
+        CREATE CERTIFICATE TDE_Certificate_NEW
+	FROM FILE = 'G:\TDECertBackup\TDE_Certificate_NEW.cer'
+	WITH PRIVATE KEY (FILE = 'G:\TDECertBackup\TDE_Certificate_NEW.pvk',
+	DECRYPTION BY PASSWORD = '<use same password here used for encryption>');
+	GO
+	
+	5. Change encryption key for your databases – aka Rotate the SQL TDE certificate
+	
+	USE DBName
+        GO  
+        ALTER DATABASE ENCRYPTION KEY 
+        ENCRYPTION BY SERVER CERTIFICATE TDE_Certificate_NEW;  
+        GO
