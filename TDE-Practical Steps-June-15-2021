@@ -63,6 +63,12 @@ E.encryption_state, E.encryptor_Thumbprint, E.* FROM sys.dm_database_encryption_
 right join sys.databases D on D.database_id = E.database_id
 left join sys.certificates c ON E.encryptor_thumbprint=c.thumbprint
 where D.name not in ('master','model', 'msdb')
+=================================================================================================================
+--Script to find list of Certificates on MASTER Database
+use master
+go
+SELECT * FROM sys.certificates
+where name not like '%##%'
 ==================================================================================================================
 
 -- At Destination Server:
