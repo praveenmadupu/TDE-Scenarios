@@ -122,3 +122,40 @@ DROP DATABASE ENCRYPTION KEY
 USE master
 DROP CERTIFICATE TDE_Certificate
 DROP MASTER KEY
+
+=================================================
+
+CASE-2: Note: On Delhi Instance, suppose that we have a different Database Master Key on Master DB (which is different from Source Server).
+============================================================================================================================================
+
+--DELHI SQL Instance
+
+Create Database Master Key on Master DB.
+USE master; 
+GO 
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'Delhi@1234567#000';
+GO
+USE master;  
+GO 
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Delhi@1234567#000';  
+BACKUP MASTER KEY TO FILE = 'H:\SQLBackups\DELHI\TDE_Files\Delhi_MasterDB_DBMasterKey.pvk'  
+    ENCRYPTION BY PASSWORD = 'Delhi@1234567#000';
+
+USE master;
+GO
+OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Delhi@1234567#000';
+GO
+CREATE CERTIFICATE TDE_Certificate
+FROM FILE = 'H:\SQLBackups\DELHI\TDE_Files\America_TDE_MasterKeyCert.cer'    
+WITH PRIVATE KEY (FILE = 'H:\SQLBackups\DELHI\TDE_Files\America_TDE_MasterKey.pvk',
+DECRYPTION BY PASSWORD = 'Sp@1234567#000')
+
+USE master
+GO
+--OPEN MASTER KEY DECRYPTION BY PASSWORD = 'Sp@1234567#111'; --This Statement is NOT Required.
+GO
+RESTORE DATABASE Anirudh
+FROM  DISK = N'H:\SQLBackups\Delhi\Anirudh.bak'
+WITH  move 'Anirudh' to 'E:\SQLData\Delhi\Anirudh.mdf',
+      move 'Anirudh_log' to 'F:\SQLLogs\Delhi\Anirudh_log.ldf',
+	  FILE = 1, NOUNLOAD,  REPLACE,  STATS = 5;
