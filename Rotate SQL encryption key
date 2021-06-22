@@ -10,6 +10,7 @@
 	Go
 	CREATE CERTIFICATE [TDE_Certificate_NEW]
 	WITH SUBJECT = 'NEW TDE Certificate'
+	EXPIRY_DATE = '20251231';  -- Please mention here NEW EXPIRY Date.
 	GO
 	
 	3.Backup the new SQL TDE certificate so we can create it on other systems as needed.
